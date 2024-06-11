@@ -1,40 +1,50 @@
-import { View, Text, StyleSheet, Image } from "react-native";
+import { View, Text, StyleSheet, Image, FlatList } from "react-native";
 import React from "react";
-import ForEach from "./shared/ForEach";
 import { SeasonAnimeMock } from "@/mocks/SeasonAnimesMock";
 
 export default function AnimeList() {
   return (
-    <View>
-      <Text style={styles.text}>Anime list</Text>
-      <ForEach
-        items={SeasonAnimeMock.data}
-        render={(item) => (
-          <View>
-            <Text style={styles.animeTitle}>{item.title}</Text>
-            <Image
-              style={styles.animeImage}
-              source={{ uri: item.images.jpg.image_url }}
-            />
-          </View>
-        )}
-      />
-    </View>
+    <FlatList
+      contentContainerStyle={styles.container}
+      data={SeasonAnimeMock.data}
+      numColumns={2}
+      keyExtractor={(item) => item.mal_id.toString()}
+      renderItem={({ item }) => (
+        <View style={styles.animeCard}>
+          <Image
+            style={styles.animeImage}
+            source={{ uri: item.images.jpg.image_url }}
+          />
+          <Text style={styles.animeTitle}>{item.title.slice(0, 15)}</Text>
+        </View>
+      )}
+    />
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    justifyContent: "center",
+  },
+  animeCard: {
+    flex: 1,
+    borderRadius: 20,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
   text: {
     fontSize: 24,
     fontWeight: "bold",
     color: "#fff",
   },
   animeTitle: {
-    fontSize: 18,
+    fontSize: 16,
     color: "#fff",
   },
   animeImage: {
     width: 100,
-    height: 100,
+    height: 150,
   },
 });
