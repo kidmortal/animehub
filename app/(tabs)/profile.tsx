@@ -1,10 +1,10 @@
-import { StyleSheet, ScrollView, Text } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
-export default function SearchPage() {
+export default function ProfileScreen() {
   return (
-    <ScrollView style={styles.pageContainer}>
-      <Text style={styles.pageTitle}>Find Movies, Tv series, and more..</Text>
-    </ScrollView>
+    <View style={styles.pageContainer}>
+      <Text style={styles.pageTitle}>Not added yet</Text>
+    </View>
   );
 }
 
