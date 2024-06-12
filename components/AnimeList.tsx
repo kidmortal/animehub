@@ -1,22 +1,26 @@
-import { View, Text, StyleSheet, Image, FlatList } from "react-native";
+import { StyleSheet, FlatList } from "react-native";
 import React from "react";
-import { SeasonAnimeMock } from "@/mocks/SeasonAnimesMock";
+import AnimeCard from "./AnimeCard";
+import { JikanAnimeData } from "@/services/JikanMoe/types";
 
-export default function AnimeList() {
+type Props = {
+  animes: JikanAnimeData[];
+};
+
+export default function AnimeList(props: Props) {
   return (
     <FlatList
       contentContainerStyle={styles.container}
-      data={SeasonAnimeMock.data}
+      data={props.animes}
       numColumns={2}
       keyExtractor={(item) => item.mal_id.toString()}
       renderItem={({ item }) => (
-        <View style={styles.animeCard}>
-          <Image
-            style={styles.animeImage}
-            source={{ uri: item.images.jpg.image_url }}
-          />
-          <Text style={styles.animeTitle}>{item.title.slice(0, 15)}</Text>
-        </View>
+        <AnimeCard
+          id={item.mal_id}
+          image={item.images.jpg.image_url}
+          title={item.title}
+          score={item.score}
+        />
       )}
     />
   );

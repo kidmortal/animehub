@@ -1,6 +1,6 @@
 export interface SeasonAnimesResponse {
   pagination: Pagination;
-  data: Daum[];
+  data: JikanAnimeData[];
 }
 
 export interface Pagination {
@@ -16,7 +16,7 @@ export interface Items {
   per_page: number;
 }
 
-export interface Daum {
+export interface JikanAnimeData {
   mal_id: number;
   url: string;
   images: Images;
@@ -24,12 +24,12 @@ export interface Daum {
   approved: boolean;
   titles: Title[];
   title: string;
-  title_english?: string;
+  title_english?: string | null;
   title_japanese: string;
   title_synonyms: string[];
   type: string;
   source: string;
-  episodes?: number;
+  episodes?: number | null;
   status: string;
   airing: boolean;
   aired: Aired;
@@ -73,18 +73,18 @@ export interface Webp {
 }
 
 export interface Trailer {
-  youtube_id?: string;
-  url?: string;
-  embed_url?: string;
-  images: Images2;
+  youtube_id?: string | null;
+  url?: string | null;
+  embed_url?: string | null;
+  images: TrailerImages;
 }
 
-export interface Images2 {
-  image_url?: string;
-  small_image_url?: string;
-  medium_image_url?: string;
-  large_image_url?: string;
-  maximum_image_url?: string;
+export interface TrailerImages {
+  image_url?: string | null;
+  small_image_url?: string | null;
+  medium_image_url?: string | null;
+  large_image_url?: string | null;
+  maximum_image_url?: string | null;
 }
 
 export interface Title {
@@ -93,8 +93,8 @@ export interface Title {
 }
 
 export interface Aired {
-  from: string;
-  to?: string;
+  from: string | null;
+  to?: string | null;
   prop: Prop;
   string: string;
 }
@@ -111,9 +111,9 @@ export interface From {
 }
 
 export interface To {
-  day?: number;
-  month?: number;
-  year?: number;
+  day?: number | null;
+  month?: number | null;
+  year?: number | null;
 }
 
 export interface Broadcast {

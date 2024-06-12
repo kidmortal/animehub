@@ -1,4 +1,6 @@
-export const SeasonAnimeMock = {
+import { SeasonAnimesResponse } from "@/services/JikanMoe/types";
+
+export const SeasonAnimeMock: SeasonAnimesResponse = {
   pagination: {
     last_visible_page: 18,
     has_next_page: true,

@@ -7,6 +7,7 @@ import "react-native-reanimated";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar, StyleSheet } from "react-native";
+import { AnimesContextProvider } from "@/context/animes";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -30,10 +31,12 @@ export default function RootLayout() {
     <ThemeProvider value={DarkTheme}>
       <SafeAreaView style={styles.container}>
         <StatusBar backgroundColor="grey" />
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="+not-found" />
-        </Stack>
+        <AnimesContextProvider>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="+not-found" />
+          </Stack>
+        </AnimesContextProvider>
       </SafeAreaView>
     </ThemeProvider>
   );
