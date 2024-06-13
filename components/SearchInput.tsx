@@ -2,12 +2,18 @@ import { View, StyleSheet, TextInput } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import React from "react";
 
-export default function SearchInput() {
+type Props = {
+  placeholder: string;
+  onChangeText: (text: string) => void;
+};
+
+export default function SearchInput(props: Props) {
   return (
     <View style={styles.searchSection}>
       <Ionicons name="search" size={24} color="white" />
       <TextInput
-        placeholder="One piece"
+        placeholder={props.placeholder}
+        onChangeText={props.onChangeText}
         placeholderTextColor="#BBB"
         style={styles.input}
       />
@@ -33,5 +39,6 @@ const styles = StyleSheet.create({
     marginLeft: 16,
     fontSize: 14,
     lineHeight: 16,
+    color: "#fff",
   },
 });

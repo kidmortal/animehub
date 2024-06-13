@@ -2,14 +2,35 @@ import AnimeList from "@/components/AnimeList";
 import AppLogo from "@/components/AppLogo";
 import { AnimesContext } from "@/context/animes";
 import { SeasonAnimeMock } from "@/mocks/SeasonAnimesMock";
+import { JikanMoeService } from "@/services/JikanMoe";
+import {
+  getLocalStorageAnimes,
+  setLocalStorageAnimes,
+} from "@/services/LocalStorageData";
 import { useContext, useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 export default function HomeScreen() {
   const animeContext = useContext(AnimesContext);
 
+  async function loadAnimes() {
+    const cachedData = await getLocalStorageAnimes();
+    if (cachedData) {
+      animeContext.setAnimesData(cachedData.animesData);
+    } else {
+      const fetchedAnimeData = await JikanMoeService.getCurrentSeasonAnimes();
+      if (fetchedAnimeData.data) {
+        setLocalStorageAnimes({
+          updatedAt: new Date().toISOString(),
+          animesData: fetchedAnimeData.data,
+        });
+        animeContext.setAnimesData(fetchedAnimeData.data);
+      }
+    }
+  }
+
   useEffect(() => {
-    animeContext.setAnimesData(SeasonAnimeMock.data);
+    loadAnimes();
   }, []);
 
   return (

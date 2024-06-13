@@ -1,7 +1,7 @@
 import { StyleSheet, FlatList } from "react-native";
 import React from "react";
 import AnimeCard from "./AnimeCard";
-import { JikanAnimeData } from "@/services/JikanMoe/types";
+import { JikanAnimeData } from "@/services/JikanMoe/types/season";
 
 type Props = {
   animes: JikanAnimeData[];
