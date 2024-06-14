@@ -1,9 +1,14 @@
-import { StyleSheet, Text, View } from "react-native";
+import LoginForm from "@/components/Auth/LoginForm";
+import UserInfo from "@/components/Auth/UserInfo";
+
+import { StyleSheet, View } from "react-native";
 
 export default function ProfileScreen() {
   return (
     <View style={styles.pageContainer}>
-      <Text style={styles.pageTitle}>Not added yet</Text>
+      <UserInfo />
+      <View style={{ height: 24 }} />
+      <LoginForm />
     </View>
   );
 }
