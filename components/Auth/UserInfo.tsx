@@ -1,16 +1,19 @@
 import { View, Text, StyleSheet } from "react-native";
 import React, { useEffect, useState } from "react";
-import { SupaBaseService } from "@/services/Supabase";
-import { User } from "@supabase/supabase-js";
+import { SupaBaseService, UserProfile } from "@/services/Supabase";
 
 export default function UserInfo() {
-  const [user, setUser] = useState<User>();
+  const [profile, setProfile] = useState<UserProfile>();
 
   async function getUserData() {
     const user = await SupaBaseService.getUser();
     if (user.data.user) {
-      setUser(user.data.user);
-      console.log(user);
+      const supabaseProfile = await SupaBaseService.getUserProfile(
+        user.data.user
+      );
+      if (supabaseProfile) {
+        setProfile(supabaseProfile);
+      }
     }
   }
   useEffect(() => {
@@ -20,8 +23,8 @@ export default function UserInfo() {
   return (
     <View>
       <Text style={styles.title}>User Info</Text>
-      <Text style={styles.text}>Email: {user?.email}</Text>
-      <Text style={styles.text}>Created at: {user?.created_at}</Text>
+      <Text style={styles.text}>Email: {profile?.email}</Text>
+      <Text style={styles.text}>Coins: {profile?.coins}</Text>
     </View>
   );
 }
