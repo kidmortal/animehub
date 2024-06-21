@@ -1,30 +1,21 @@
-import { View, Text, StyleSheet } from "react-native";
-import React, { useEffect, useState } from "react";
-import { SupaBaseService, UserProfile } from "@/services/Supabase";
+import { View, Text, StyleSheet, Image } from "react-native";
+import React from "react";
+import { UserProfile } from "@/services/Supabase";
 
-export default function UserInfo() {
-  const [profile, setProfile] = useState<UserProfile>();
+type Props = {
+  userProfile: UserProfile | null;
+};
 
-  async function getUserData() {
-    const user = await SupaBaseService.getUser();
-    if (user.data.user) {
-      const supabaseProfile = await SupaBaseService.getUserProfile(
-        user.data.user
-      );
-      if (supabaseProfile) {
-        setProfile(supabaseProfile);
-      }
-    }
-  }
-  useEffect(() => {
-    getUserData();
-  }, []);
-
+export default function UserInfo(props: Props) {
   return (
     <View>
       <Text style={styles.title}>User Info</Text>
-      <Text style={styles.text}>Email: {profile?.email}</Text>
-      <Text style={styles.text}>Coins: {profile?.coins}</Text>
+      <Image
+        style={styles.avatar}
+        source={{ uri: props.userProfile?.avatar_url }}
+      />
+      <Text style={styles.text}>Email: {props.userProfile?.email}</Text>
+      <Text style={styles.text}>Coins: {props.userProfile?.coins}</Text>
     </View>
   );
 }
@@ -37,5 +28,10 @@ const styles = StyleSheet.create({
   },
   text: {
     color: "#fff",
+  },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
   },
 });
