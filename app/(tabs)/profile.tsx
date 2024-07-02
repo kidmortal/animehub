@@ -2,41 +2,44 @@ import LoginForm from "@/components/Auth/LoginForm";
 import UserInfo from "@/components/Auth/UserInfo";
 import Button from "@/components/Button";
 import { ImagePicker } from "@/components/ImagePicker";
+import WatchingAnimeCard from "@/components/WatchingAnimeCard";
 import When from "@/components/When";
 import { AnimesContext } from "@/context/animes";
 import { SupaBaseService } from "@/services/Supabase";
-import { useContext, useEffect } from "react";
+import { useContext } from "react";
 
-import { StyleSheet, View } from "react-native";
+import { FlatList, StyleSheet, Text, View } from "react-native";
+
+type WatchingAnime = {
+  mal_id: number;
+  name: string;
+  url: string;
+};
 
 export default function ProfileScreen() {
   const animeContext = useContext(AnimesContext);
 
-  async function loadUserInfo() {
-    const response = await SupaBaseService.getUser();
-    if (response?.data?.user) {
-      animeContext.setUser(response.data.user);
-      const getProfile = await SupaBaseService.getUserProfile(
-        response.data.user
+  async function handleAvatarUpdate(base64String: string) {
+    if (animeContext.user) {
+      const response = await SupaBaseService.updateUserAvatar(
+        animeContext.user.id,
+        base64String
       );
-      const profileUrl = SupaBaseService.getUserAvatarUrl(
-        response.data.user.id
-      );
-      if (getProfile)
-        animeContext.setUserProfile({
-          ...getProfile,
-          avatar_url: profileUrl ?? "",
-        });
+      if (response) {
+        animeContext.setProfileAvatarUrl(
+          SupaBaseService.getUserAvatarUrl(animeContext.user.id) ?? ""
+        );
+      }
     }
   }
-
-  useEffect(() => {
-    if (!animeContext.userProfile) loadUserInfo();
-  }, []);
 
   return (
     <View style={styles.pageContainer}>
       <UserInfo userProfile={animeContext.userProfile} />
+      <ImagePicker
+        userId={animeContext.user?.id}
+        onImagePicked={handleAvatarUpdate}
+      />
       <View style={{ height: 24 }} />
       <When value={!animeContext.user}>
         <LoginForm />
@@ -44,7 +47,19 @@ export default function ProfileScreen() {
       <When value={!!animeContext.user}>
         <Button text="Logout" onPress={() => SupaBaseService.signOut()} />
       </When>
-      <ImagePicker userId={animeContext.user?.id} />
+      <Text style={styles.text}>Watching animes</Text>
+      <FlatList
+        data={animeContext.watchingAnimes}
+        numColumns={2}
+        keyExtractor={(item) => item.mal_id.toString()}
+        renderItem={({ item }) => (
+          <WatchingAnimeCard
+            id={item.mal_id}
+            image={item.url}
+            title={item.name}
+          />
+        )}
+      />
     </View>
   );
 }
@@ -57,6 +72,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#15141F",
   },
   pageTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#fff",
+  },
+  text: {
     fontSize: 24,
     fontWeight: "bold",
     color: "#fff",

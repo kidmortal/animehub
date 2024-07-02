@@ -1,13 +1,15 @@
 import { StyleSheet, FlatList } from "react-native";
-import React from "react";
+import React, { useContext } from "react";
 import AnimeCard from "./AnimeCard";
 import { JikanAnimeData } from "@/services/JikanMoe/types/season";
+import { AnimesContext } from "@/context/animes";
 
 type Props = {
   animes: JikanAnimeData[];
 };
 
 export default function AnimeList(props: Props) {
+  const animeContext = useContext(AnimesContext);
   return (
     <FlatList
       contentContainerStyle={styles.container}
@@ -20,6 +22,9 @@ export default function AnimeList(props: Props) {
           image={item.images.jpg.image_url}
           title={item.title}
           score={item.score}
+          watching={animeContext.watchingAnimes.some(
+            (anime) => anime.mal_id === item.mal_id
+          )}
         />
       )}
     />

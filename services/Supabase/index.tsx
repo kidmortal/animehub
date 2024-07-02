@@ -81,6 +81,16 @@ class SupaBaseServiceClass {
     }
     return data;
   }
+  async getUserWatchingAnimeList(user: User): Promise<any> {
+    const result = await this._getUserWatchingAnimeListFromDatabase(user);
+    if (!result) return null;
+    const { data, error } = result;
+    if (error) {
+      Alert.alert(error.message);
+      return null;
+    }
+    return data;
+  }
   async createUserProfile(user: User) {
     const response = await this.client
       ?.from("users")
@@ -100,14 +110,42 @@ class SupaBaseServiceClass {
     }
   }
 
-  async uploadUserAvatar(fileName: string, base64Filetring: string) {
+  async updateUserAvatar(userId: string, base64Filetring: string) {
     if (!this.client) return null;
     const { data, error } = await this.client?.storage
       .from("avatars")
-      .upload(fileName, decode(base64Filetring), { contentType: "image/png" });
+      .update(`${userId}.png`, decode(base64Filetring), {
+        contentType: "image/png",
+        upsert: true,
+        cacheControl: "3600",
+      });
     if (error) {
       Alert.alert(error.message);
-      console.log(error);
+      return null;
+    }
+    return data;
+  }
+
+  async addAnimeToWatchingList(args: {
+    userId: string;
+    animeId: number;
+    animeName: string;
+    animeUrl: string;
+  }) {
+    if (!this.client) return null;
+    const { data, error } = await this.client
+      ?.from("watching_anime")
+      .insert([
+        {
+          user_id: args.userId,
+          mal_id: args.animeId,
+          name: args.animeName,
+          url: args.animeUrl,
+        },
+      ])
+      .select();
+    if (error) {
+      Alert.alert(error.message);
       return null;
     }
     return data;
@@ -127,6 +165,14 @@ class SupaBaseServiceClass {
       .select("*")
       .eq("auth_id", user.id)
       .single();
+    return response;
+  }
+
+  private async _getUserWatchingAnimeListFromDatabase(user: User) {
+    const response = await this.client
+      ?.from("watching_anime")
+      .select("*")
+      .eq("user_id", user.id);
     return response;
   }
 }

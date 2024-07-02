@@ -1,12 +1,21 @@
 import { JikanAnimeData } from "@/services/JikanMoe/types/season";
-import { UserProfile } from "@/services/Supabase";
+import { SupaBaseService, UserProfile } from "@/services/Supabase";
 import { User } from "@supabase/supabase-js";
 import { createContext, useState } from "react";
+
+export type WatchingAnime = {
+  mal_id: number;
+  name: string;
+  url: string;
+};
 
 export type AnimesContextType = {
   animesData: JikanAnimeData[];
   user: User | null;
   userProfile: UserProfile | null;
+  watchingAnimes: WatchingAnime[];
+  fetchUserWatchingAnimes: () => void;
+  setWatchingAnimes: (animes: WatchingAnime[]) => void;
   setProfileAvatarUrl: (url: string) => void;
   setAnimesData: (data: JikanAnimeData[]) => void;
   getAnimeId: (id: number) => JikanAnimeData | undefined;
@@ -18,6 +27,9 @@ export const AnimesContextStore: AnimesContextType = {
   animesData: [],
   user: null,
   userProfile: null,
+  watchingAnimes: [],
+  fetchUserWatchingAnimes: () => {},
+  setWatchingAnimes: () => {},
   setProfileAvatarUrl: () => {},
   setUser: () => {},
   setUserProfile: () => {},
@@ -34,6 +46,7 @@ type AnimesContextProviderProp = {
 
 export function AnimesContextProvider(props: AnimesContextProviderProp) {
   const [animesData, setAnimesData] = useState<JikanAnimeData[]>([]);
+  const [watchingAnimes, setWatchingAnimes] = useState<WatchingAnime[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
@@ -47,12 +60,21 @@ export function AnimesContextProvider(props: AnimesContextProviderProp) {
     }
   }
 
+  async function fetchUserWatchingAnimes() {
+    if (!user) return;
+    const response = await SupaBaseService.getUserWatchingAnimeList(user);
+    if (response) setWatchingAnimes(response);
+  }
+
   return (
     <AnimesContext.Provider
       value={{
         animesData,
         user,
         userProfile,
+        watchingAnimes,
+        fetchUserWatchingAnimes,
+        setWatchingAnimes,
         setAnimesData,
         getAnimeId,
         setUser,
