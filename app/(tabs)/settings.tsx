@@ -1,42 +1,48 @@
-import Button from "@/components/Button";
+import Button from '@/components/Button';
 import {
-  LocalStorageAnimes,
-  clearLocalStorageAnimes,
-  getLocalStorageAnimes,
-} from "@/services/LocalStorageData";
-import dayjs from "dayjs";
-import { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
-import { TouchableOpacity } from "react-native";
+  AnimeHubLocalStorageService,
+  LocalStorageCacheExpirationSettings,
+  LocalStorageCacheExpirationTimestamps,
+} from '@/services/LocalStorageData';
+import dayjs from 'dayjs';
+import { useEffect, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 
 export default function SettingsScreen() {
-  const [cachedData, setCachedData] = useState<LocalStorageAnimes | null>(null);
+  const [cachedTimestamp, setCachedTimestamp] = useState<LocalStorageCacheExpirationTimestamps | null>(null);
+  const [cacheSettings, setCacheSettings] = useState<LocalStorageCacheExpirationSettings | null>(null);
+
+  async function loadLocalStorageInfo() {
+    const cachedDataTimestamps = await AnimeHubLocalStorageService.getExpirationTimestamps();
+    const cacheSettings = await AnimeHubLocalStorageService.getExpirationSettings();
+    setCacheSettings(cacheSettings);
+    setCachedTimestamp(cachedDataTimestamps);
+  }
 
   useEffect(() => {
-    getLocalStorageAnimes().then((data) => {
-      if (data) {
-        setCachedData(data);
-      }
-    });
+    loadLocalStorageInfo();
   }, []);
 
   function clearStorage() {
-    clearLocalStorageAnimes();
-    setCachedData(null);
+    AnimeHubLocalStorageService.clearLocalStorageAnimes();
   }
 
   return (
     <View style={styles.pageContainer}>
       <Text style={styles.pageTitle}>
-        Cached data: {cachedData ? "true" : "false"}
+        Animes cached at: {dayjs(cachedTimestamp?.seasonAnimesUpdatedAt).format('DD/MM/YYYY hh:mm') || 'N/A'}
       </Text>
       <Text style={styles.pageTitle}>
-        Cached anime amount: {cachedData?.animesData.length || 0}
+        Profile cached at: {dayjs(cachedTimestamp?.userProfileUpdatedAt).format('DD/MM/YYYY hh:mm') || 'N/A'}
+      </Text>
+      <View style={{ height: 24 }} />
+      <Text style={styles.pageTitle}>
+        Season anime cache expiration: {cacheSettings?.seasonAnimeExpirationHours || 'N/A'} hours
       </Text>
       <Text style={styles.pageTitle}>
-        Last Updated At:{" "}
-        {dayjs(cachedData?.updatedAt).format("DD/MM/YYYY hh:mm") || "N/A"}
+        Profile cache expiration: {cacheSettings?.userProfileExpirationHours || 'N/A'} hours
       </Text>
+      <View style={{ height: 24 }} />
       <Button text="Clear cache" onPress={() => clearStorage()} />
     </View>
   );
@@ -47,11 +53,11 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 24,
     paddingTop: 36,
-    backgroundColor: "#15141F",
+    backgroundColor: '#15141F',
   },
   pageTitle: {
     fontSize: 18,
-    fontWeight: "bold",
-    color: "#fff",
+    fontWeight: 'bold',
+    color: '#fff',
   },
 });

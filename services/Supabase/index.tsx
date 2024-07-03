@@ -1,7 +1,7 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { SupabaseClient, User, createClient } from "@supabase/supabase-js";
-import { decode } from "base64-arraybuffer";
-import { Alert } from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SupabaseClient, User, createClient } from '@supabase/supabase-js';
+import { decode } from 'base64-arraybuffer';
+import { Alert } from 'react-native';
 
 export type UserProfile = {
   auth_id: string;
@@ -10,12 +10,12 @@ export type UserProfile = {
   avatar_url?: string;
 };
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? "";
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "";
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
 
 function createSubapaseInstance() {
   if (!supabaseUrl || !supabaseAnonKey) {
-    Alert.alert("Please provide Supabase URL and Anon Key in .env file");
+    Alert.alert('Please provide Supabase URL and Anon Key in .env file');
     return null;
   }
   try {
@@ -62,8 +62,7 @@ class SupaBaseServiceClass {
     } = result;
 
     if (error) Alert.alert(error.message);
-    if (!session)
-      Alert.alert("Please check your inbox for email verification!");
+    if (!session) Alert.alert('Please check your inbox for email verification!');
   }
   async getUserProfile(user: User): Promise<UserProfile | null> {
     const result = await this._getUserProfileFromDatabase(user);
@@ -92,9 +91,7 @@ class SupaBaseServiceClass {
     return data;
   }
   async createUserProfile(user: User) {
-    const response = await this.client
-      ?.from("users")
-      .insert({ auth_id: user.id, email: user.email });
+    const response = await this.client?.from('users').insert({ auth_id: user.id, email: user.email });
     return response;
   }
   async signOut() {
@@ -113,11 +110,11 @@ class SupaBaseServiceClass {
   async updateUserAvatar(userId: string, base64Filetring: string) {
     if (!this.client) return null;
     const { data, error } = await this.client?.storage
-      .from("avatars")
+      .from('avatars')
       .update(`${userId}.png`, decode(base64Filetring), {
-        contentType: "image/png",
+        contentType: 'image/png',
         upsert: true,
-        cacheControl: "3600",
+        cacheControl: '3600',
       });
     if (error) {
       Alert.alert(error.message);
@@ -126,24 +123,15 @@ class SupaBaseServiceClass {
     return data;
   }
 
-  async addAnimeToWatchingList(args: {
-    userId: string;
-    animeId: number;
-    animeName: string;
-    animeUrl: string;
-  }) {
+  async addAnimeToWatchingList(args: { userId: string; animeId: number; animeName: string; animeUrl: string }) {
     if (!this.client) return null;
-    const { data, error } = await this.client
-      ?.from("watching_anime")
-      .insert([
-        {
-          user_id: args.userId,
-          mal_id: args.animeId,
-          name: args.animeName,
-          url: args.animeUrl,
-        },
-      ])
-      .select();
+    const newAnime = {
+      user_id: args.userId,
+      mal_id: args.animeId,
+      name: args.animeName,
+      url: args.animeUrl,
+    };
+    const { data, error } = await this.client?.from('watching_anime').insert([newAnime]).select();
     if (error) {
       Alert.alert(error.message);
       return null;
@@ -155,24 +143,17 @@ class SupaBaseServiceClass {
     if (!this.client) return null;
     const {
       data: { publicUrl },
-    } = this.client?.storage.from("avatars").getPublicUrl(`${userId}.png`);
+    } = this.client?.storage.from('avatars').getPublicUrl(`${userId}.png`);
     return publicUrl;
   }
 
   private async _getUserProfileFromDatabase(user: User) {
-    const response = await this.client
-      ?.from("users")
-      .select("*")
-      .eq("auth_id", user.id)
-      .single();
+    const response = await this.client?.from('users').select('*').eq('auth_id', user.id).single();
     return response;
   }
 
   private async _getUserWatchingAnimeListFromDatabase(user: User) {
-    const response = await this.client
-      ?.from("watching_anime")
-      .select("*")
-      .eq("user_id", user.id);
+    const response = await this.client?.from('watching_anime').select('*').eq('user_id', user.id);
     return response;
   }
 }
