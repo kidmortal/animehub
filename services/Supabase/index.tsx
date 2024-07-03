@@ -46,9 +46,12 @@ class SupaBaseServiceClass {
       email: email,
       password: password,
     });
-    if (!result) return;
-
-    if (result.error) Alert.alert(result.error.message);
+    if (!result) return false;
+    if (result.error) {
+      Alert.alert(result.error.message);
+      return false;
+    }
+    return true;
   }
   async signUpWithEmail(email: string, password: string) {
     const result = await this.client?.auth.signUp({

@@ -1,5 +1,6 @@
 import { JikanMoeService } from '@/services/JikanMoe';
 import { JikanAnimeData } from '@/services/JikanMoe/types/season';
+import { JikanMoeSeason } from '@/services/JikanMoe/types/seasons';
 import { AnimeHubLocalStorageService } from '@/services/LocalStorageData';
 import { SupaBaseService, UserProfile } from '@/services/Supabase';
 import { User } from '@supabase/supabase-js';
@@ -16,6 +17,9 @@ export type AnimesContextType = {
   user: User | null;
   userProfile: UserProfile | null;
   watchingAnimes: WatchingAnime[];
+  seasons: JikanMoeSeason[];
+  setSeasons: (seasons: JikanMoeSeason[]) => void;
+  loadSeasons: () => void;
   loadUserInfo: () => void;
   loadSeasonAnimes: () => void;
   fetchUserWatchingAnimes: () => void;
@@ -32,6 +36,9 @@ export const AnimesContextStore: AnimesContextType = {
   user: null,
   userProfile: null,
   watchingAnimes: [],
+  seasons: [],
+  setSeasons: () => {},
+  loadSeasons: () => {},
   loadUserInfo: () => {},
   loadSeasonAnimes: () => {},
   fetchUserWatchingAnimes: () => {},
@@ -51,30 +58,48 @@ type AnimesContextProviderProp = {
 
 export function AnimesContextProvider(props: AnimesContextProviderProp) {
   const [animesData, setAnimesData] = useState<JikanAnimeData[]>([]);
+  const [seasons, setSeasons] = useState<JikanMoeSeason[]>([]);
   const [watchingAnimes, setWatchingAnimes] = useState<WatchingAnime[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
+  async function loadSeasons() {
+    const cachedData = await AnimeHubLocalStorageService.getLocalStorageSeasonsList();
+    if (cachedData) {
+      setSeasons(cachedData);
+    } else {
+      const fetchedSeasons = await JikanMoeService.getSeasonsList();
+      if (fetchedSeasons.data) {
+        AnimeHubLocalStorageService.setLocalStorageSeasonsList(fetchedSeasons.data);
+        setSeasons(fetchedSeasons.data);
+      }
+    }
+  }
 
   function getAnimeId(id: number) {
     return animesData.find((anime) => anime.mal_id === id);
   }
 
   async function loadUserInfo() {
-    const cachedData = await AnimeHubLocalStorageService.getLocalStorageUserProfile();
-    if (cachedData) {
-      setUserProfile(cachedData);
-    } else {
-      const response = await SupaBaseService.getUser();
-      if (response?.data?.user) {
-        setUser(response.data.user);
-        const getProfile = await SupaBaseService.getUserProfile(response.data.user);
-        const profileUrl = SupaBaseService.getUserAvatarUrl(response.data.user.id);
-        if (getProfile) {
-          const fetchedProfile = { ...getProfile, avatar_url: profileUrl ?? '' };
-          setUserProfile(fetchedProfile);
-          AnimeHubLocalStorageService.setLocalStorageUserProfile(fetchedProfile);
-        }
+    const response = await SupaBaseService.getUser();
+    if (response?.data?.user) {
+      setUser(response.data.user);
+    }
+  }
+
+  async function loadUserProfile() {
+    if (!user) return;
+    const cachedProfileData = await AnimeHubLocalStorageService.getLocalStorageUserProfile();
+    if (!cachedProfileData) {
+      const getProfile = await SupaBaseService.getUserProfile(user);
+      const profileUrl = SupaBaseService.getUserAvatarUrl(user.id);
+      if (getProfile) {
+        const fetchedProfile = { ...getProfile, avatar_url: profileUrl ?? '' };
+        setUserProfile(fetchedProfile);
+        AnimeHubLocalStorageService.setLocalStorageUserProfile(fetchedProfile);
       }
+    } else {
+      setUserProfile(cachedProfileData);
     }
   }
 
@@ -104,15 +129,16 @@ export function AnimesContextProvider(props: AnimesContextProviderProp) {
   }
 
   useEffect(() => {
-    if (animesData.length === 0) {
-      loadSeasonAnimes();
-    }
-    if (!userProfile) loadUserInfo();
+    console.log('effect');
+    if (animesData.length === 0) loadSeasonAnimes();
+    if (!user) loadUserInfo();
+    if (seasons.length === 0) loadSeasons();
   }, []);
 
   useEffect(() => {
     if (user) {
       fetchUserWatchingAnimes();
+      loadUserProfile();
     }
   }, [user]);
 
@@ -123,6 +149,9 @@ export function AnimesContextProvider(props: AnimesContextProviderProp) {
         user,
         userProfile,
         watchingAnimes,
+        seasons,
+        setSeasons,
+        loadSeasons,
         loadUserInfo,
         loadSeasonAnimes,
         fetchUserWatchingAnimes,

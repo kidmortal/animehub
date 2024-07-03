@@ -24,7 +24,7 @@ export default function SettingsScreen() {
   }, []);
 
   function clearStorage() {
-    AnimeHubLocalStorageService.clearLocalStorageAnimes();
+    AnimeHubLocalStorageService.clearLocalStorage();
   }
 
   return (
@@ -35,12 +35,18 @@ export default function SettingsScreen() {
       <Text style={styles.pageTitle}>
         Profile cached at: {dayjs(cachedTimestamp?.userProfileUpdatedAt).format('DD/MM/YYYY hh:mm') || 'N/A'}
       </Text>
+      <Text style={styles.pageTitle}>
+        Seasons cached at: {dayjs(cachedTimestamp?.seasonListUpdatedAt).format('DD/MM/YYYY hh:mm') || 'N/A'}
+      </Text>
       <View style={{ height: 24 }} />
       <Text style={styles.pageTitle}>
         Season anime cache expiration: {cacheSettings?.seasonAnimeExpirationHours || 'N/A'} hours
       </Text>
       <Text style={styles.pageTitle}>
         Profile cache expiration: {cacheSettings?.userProfileExpirationHours || 'N/A'} hours
+      </Text>
+      <Text style={styles.pageTitle}>
+        Season list cache expiration: {cacheSettings?.seasonListExpirationHours || 'N/A'} hours
       </Text>
       <View style={{ height: 24 }} />
       <Button text="Clear cache" onPress={() => clearStorage()} />
