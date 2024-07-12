@@ -1,36 +1,43 @@
-import { View, Text, FlatList, StyleSheet } from 'react-native';
-import React from 'react';
-import { JikanMoeSeason } from '@/services/JikanMoe/types/seasons';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { SeasonYearName } from '@/context/animes';
 
 type Props = {
-  seasons: JikanMoeSeason[];
+  seasons: SeasonYearName[];
+  selectedIndex: number;
+  onSelect: (index: number) => void;
 };
 
 export default function SeasonList(props: Props) {
-  function parseSeasons() {
-    let parsedSeasons: string[] = [];
-    for (let i = 0; i < props.seasons.length; i++) {
-      const seasonYear = props.seasons[i];
-      seasonYear.seasons.forEach((season) => {
-        parsedSeasons.push(`${season} ${seasonYear.year}`);
-      });
+  const ref = useRef<FlatList<SeasonYearName> | null>(null);
+
+  useEffect(() => {
+    if (props.selectedIndex > 0) {
+      ref?.current?.scrollToIndex({ index: props.selectedIndex, viewPosition: 0.5 });
     }
-    return parsedSeasons;
-  }
+  }, [props.selectedIndex]);
 
   return (
     <View>
       <FlatList
         contentContainerStyle={styles.container}
-        data={parseSeasons()}
+        data={props.seasons}
         horizontal
-        keyExtractor={(item) => item}
+        keyExtractor={(item) => item.year + item.season}
         ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
-        renderItem={({ item }) => (
-          <View style={styles.seasonButton}>
-            <Text style={styles.text}>{item}</Text>
-          </View>
+        renderItem={({ item, index }) => (
+          <TouchableOpacity style={styles.seasonButton} onPress={() => props.onSelect(index)}>
+            <Text style={[styles.text, index === props.selectedIndex ? styles.selected : null]}>
+              {item.year} {item.season}
+            </Text>
+          </TouchableOpacity>
         )}
+        getItemLayout={(_, index) => ({
+          length: 95, //  WIDTH + (MARGIN_HORIZONTAL * 2)
+          offset: 95 * index, //  ( WIDTH + (MARGIN_HORIZONTAL*2) ) * (index)
+          index,
+        })}
+        ref={ref}
       />
     </View>
   );
@@ -47,6 +54,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
+  },
+  selected: {
+    backgroundColor: 'orange',
+    borderRadius: 6,
+    padding: 6,
   },
   text: {
     fontSize: 16,

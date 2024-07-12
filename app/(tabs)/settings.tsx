@@ -1,14 +1,16 @@
 import Button from '@/components/Button';
 import {
   AnimeHubLocalStorageService,
+  CacheKeyInfo,
   LocalStorageCacheExpirationSettings,
   LocalStorageCacheExpirationTimestamps,
 } from '@/services/LocalStorageData';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 
 export default function SettingsScreen() {
+  const [cachedKeys, setCachedKeys] = useState<CacheKeyInfo[]>([]);
   const [cachedTimestamp, setCachedTimestamp] = useState<LocalStorageCacheExpirationTimestamps | null>(null);
   const [cacheSettings, setCacheSettings] = useState<LocalStorageCacheExpirationSettings | null>(null);
 
@@ -21,6 +23,9 @@ export default function SettingsScreen() {
 
   useEffect(() => {
     loadLocalStorageInfo();
+    AnimeHubLocalStorageService.getAllCachedDataInfo().then((data) => {
+      setCachedKeys(data);
+    });
   }, []);
 
   function clearStorage() {
@@ -29,15 +34,6 @@ export default function SettingsScreen() {
 
   return (
     <View style={styles.pageContainer}>
-      <Text style={styles.pageTitle}>
-        Animes cached at: {dayjs(cachedTimestamp?.seasonAnimesUpdatedAt).format('DD/MM/YYYY hh:mm') || 'N/A'}
-      </Text>
-      <Text style={styles.pageTitle}>
-        Profile cached at: {dayjs(cachedTimestamp?.userProfileUpdatedAt).format('DD/MM/YYYY hh:mm') || 'N/A'}
-      </Text>
-      <Text style={styles.pageTitle}>
-        Seasons cached at: {dayjs(cachedTimestamp?.seasonListUpdatedAt).format('DD/MM/YYYY hh:mm') || 'N/A'}
-      </Text>
       <View style={{ height: 24 }} />
       <Text style={styles.pageTitle}>
         Season anime cache expiration: {cacheSettings?.seasonAnimeExpirationHours || 'N/A'} hours
@@ -49,6 +45,18 @@ export default function SettingsScreen() {
         Season list cache expiration: {cacheSettings?.seasonListExpirationHours || 'N/A'} hours
       </Text>
       <View style={{ height: 24 }} />
+      <FlatList
+        data={cachedKeys}
+        renderItem={({ item }) => (
+          <View>
+            <Text style={styles.cacheKeyTitle}>{item.key}</Text>
+            <Text style={styles.cacheKeyTimestamp}>
+              Cached at: {dayjs(item.cachedAt).format('DD/MM/YYYY hh:mm') || 'N/A'}
+            </Text>
+          </View>
+        )}
+        keyExtractor={(item) => item.key}
+      />
       <Button text="Clear cache" onPress={() => clearStorage()} />
     </View>
   );
@@ -64,6 +72,15 @@ const styles = StyleSheet.create({
   pageTitle: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: '#fff',
+  },
+  cacheKeyTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  cacheKeyTimestamp: {
+    fontSize: 14,
     color: '#fff',
   },
 });

@@ -4,10 +4,21 @@ import { JikanAnimeCharacters } from '../JikanMoe/types/characters';
 import { UserProfile } from '../Supabase';
 import dayjs from 'dayjs';
 import { JikanMoeSeason, JikanMoeSeasonsList } from '../JikanMoe/types/seasons';
+import { SeasonYearName } from '@/context/animes';
 
 export type LocalStorageAnimes = {
   updatedAt: string;
   animesData: JikanAnimeData[];
+};
+
+export type CacheKeyInfo = {
+  key: string;
+  cachedAt: string;
+};
+
+type CachedItem = {
+  item: any;
+  cachedAt: string;
 };
 
 export type LocalStorageCacheExpirationSettings = {
@@ -25,32 +36,24 @@ export type LocalStorageCacheExpirationTimestamps = {
 };
 
 class AnimeHubLocalStorageServiceClass {
-  async getLocalStorageAnimes(): Promise<JikanAnimeData[] | null> {
-    const cachedData = await AsyncStorage.getItem('animesData');
+  async getLocalStorageSeasonAnimes(season: SeasonYearName): Promise<JikanAnimeData[] | null> {
+    const cachedData = await this._getCachedItem(`season-animes-${season.year}-${season.season}`);
     // not cached
     if (!cachedData) return null;
-    const cachedDataTimestamps = await this.getExpirationTimestamps();
-    const expirationSettings = await this.getExpirationSettings();
     // no cache timestap
-    if (!cachedDataTimestamps.seasonAnimesUpdatedAt) {
+    if (!cachedData.cachedAt) {
       return null;
     }
+    const expirationSettings = await this.getExpirationSettings();
     // cache expired
-    if (
-      dayjs(cachedDataTimestamps.seasonAnimesUpdatedAt)
-        .add(expirationSettings.seasonAnimeExpirationHours, 'hours')
-        .isBefore(dayjs())
-    ) {
+    if (dayjs(cachedData.cachedAt).add(expirationSettings.seasonAnimeExpirationHours, 'hours').isBefore(dayjs())) {
       return null;
     }
-    const data: JikanAnimeData[] = JSON.parse(cachedData);
+    const data: JikanAnimeData[] = cachedData.item;
     return data;
   }
-  async setLocalStorageAnimes(data: JikanAnimeData[]) {
-    AsyncStorage.setItem('animesData', JSON.stringify(data));
-    const cachedDataTimestamps = await this.getExpirationTimestamps();
-    cachedDataTimestamps.seasonAnimesUpdatedAt = dayjs().toISOString();
-    this._setExpirationTimestamps(cachedDataTimestamps);
+  async setLocalStorageSeasonAnimes(season: SeasonYearName, data: JikanAnimeData[]) {
+    this._cacheItem(`season-animes-${season.year}-${season.season}`, data);
   }
   async setLocalStorageUserProfile(data: UserProfile) {
     AsyncStorage.setItem('userProfile', JSON.stringify(data));
@@ -150,6 +153,34 @@ class AnimeHubLocalStorageServiceClass {
   }
   private _setExpirationTimestamps(timestamps: LocalStorageCacheExpirationTimestamps) {
     AsyncStorage.setItem('cacheExpirationTimestamps', JSON.stringify(timestamps));
+  }
+
+  async getAllCachedDataInfo() {
+    const cachedDataList: CacheKeyInfo[] = [];
+    const allKeys = await AsyncStorage.getAllKeys();
+    for await (const key of allKeys) {
+      const cachedData = await this._getCachedItem(key);
+      cachedDataList.push({
+        key: key ?? 'N/A',
+        cachedAt: cachedData?.cachedAt ?? 'N/A',
+      });
+    }
+
+    return cachedDataList;
+  }
+
+  private async _getCachedItem(key: string): Promise<CachedItem | null> {
+    const cachedData = await AsyncStorage.getItem(key);
+    if (!cachedData) return null;
+    const data: CachedItem = JSON.parse(cachedData);
+    return data;
+  }
+  private async _cacheItem(key: string, data: any) {
+    const cachedData: CachedItem = {
+      item: data,
+      cachedAt: dayjs().toISOString(),
+    };
+    AsyncStorage.setItem(key, JSON.stringify(cachedData));
   }
 }
 

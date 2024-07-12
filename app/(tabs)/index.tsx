@@ -12,7 +12,11 @@ export default function HomeScreen() {
     <View style={styles.pageContainer}>
       <AppLogo />
       <View style={{ height: 24 }} />
-      <SeasonList seasons={animeContext.seasons} />
+      <SeasonList
+        seasons={animeContext.seasons}
+        selectedIndex={animeContext.selectedSeasonIndex}
+        onSelect={(index) => animeContext.setSelectedSeasonIndex(index)}
+      />
       <View style={{ height: 24 }} />
       <AnimeList animes={animeContext.animesData} />
     </View>

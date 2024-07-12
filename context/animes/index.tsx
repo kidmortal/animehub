@@ -1,8 +1,9 @@
 import { JikanMoeService } from '@/services/JikanMoe';
 import { JikanAnimeData } from '@/services/JikanMoe/types/season';
-import { JikanMoeSeason } from '@/services/JikanMoe/types/seasons';
 import { AnimeHubLocalStorageService } from '@/services/LocalStorageData';
 import { SupaBaseService, UserProfile } from '@/services/Supabase';
+import { ParserUtils } from '@/utils/parsers';
+import { TimeUtils } from '@/utils/time';
 import { User } from '@supabase/supabase-js';
 import { createContext, useEffect, useState } from 'react';
 
@@ -12,13 +13,20 @@ export type WatchingAnime = {
   url: string;
 };
 
+export type SeasonYearName = {
+  year: number;
+  season: string;
+};
+
 export type AnimesContextType = {
   animesData: JikanAnimeData[];
   user: User | null;
   userProfile: UserProfile | null;
   watchingAnimes: WatchingAnime[];
-  seasons: JikanMoeSeason[];
-  setSeasons: (seasons: JikanMoeSeason[]) => void;
+  seasons: SeasonYearName[];
+  selectedSeasonIndex: number;
+  setSelectedSeasonIndex: (index: number) => void;
+  setSeasons: (seasons: SeasonYearName[]) => void;
   loadSeasons: () => void;
   loadUserInfo: () => void;
   loadSeasonAnimes: () => void;
@@ -37,6 +45,8 @@ export const AnimesContextStore: AnimesContextType = {
   userProfile: null,
   watchingAnimes: [],
   seasons: [],
+  selectedSeasonIndex: 0,
+  setSelectedSeasonIndex: () => {},
   setSeasons: () => {},
   loadSeasons: () => {},
   loadUserInfo: () => {},
@@ -58,7 +68,8 @@ type AnimesContextProviderProp = {
 
 export function AnimesContextProvider(props: AnimesContextProviderProp) {
   const [animesData, setAnimesData] = useState<JikanAnimeData[]>([]);
-  const [seasons, setSeasons] = useState<JikanMoeSeason[]>([]);
+  const [selectedSeasonIndex, setSelectedSeasonIndex] = useState<number>(0);
+  const [seasons, setSeasons] = useState<SeasonYearName[]>([]);
   const [watchingAnimes, setWatchingAnimes] = useState<WatchingAnime[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -66,14 +77,22 @@ export function AnimesContextProvider(props: AnimesContextProviderProp) {
   async function loadSeasons() {
     const cachedData = await AnimeHubLocalStorageService.getLocalStorageSeasonsList();
     if (cachedData) {
-      setSeasons(cachedData);
+      setSeasons(ParserUtils.parseJikanSeasonsToSeasonYearName(cachedData));
     } else {
       const fetchedSeasons = await JikanMoeService.getSeasonsList();
       if (fetchedSeasons.data) {
         AnimeHubLocalStorageService.setLocalStorageSeasonsList(fetchedSeasons.data);
-        setSeasons(fetchedSeasons.data);
+        setSeasons(ParserUtils.parseJikanSeasonsToSeasonYearName(fetchedSeasons.data));
       }
     }
+  }
+
+  async function selectCurrentSeason() {
+    const currentSeason = TimeUtils.getCurrentSeasonYearName();
+    const seasonIndex = seasons.findIndex(
+      (season) => season.year === currentSeason.year && season.season === currentSeason.season,
+    );
+    setSelectedSeasonIndex(seasonIndex);
   }
 
   function getAnimeId(id: number) {
@@ -104,15 +123,16 @@ export function AnimesContextProvider(props: AnimesContextProviderProp) {
   }
 
   async function loadSeasonAnimes() {
-    const cachedData = await AnimeHubLocalStorageService.getLocalStorageAnimes();
-    if (cachedData) {
-      setAnimesData(cachedData);
-    } else {
-      const fetchedAnimeData = await JikanMoeService.getCurrentSeasonAnimes();
-      if (fetchedAnimeData.data) {
-        AnimeHubLocalStorageService.setLocalStorageAnimes(fetchedAnimeData.data);
-        setAnimesData(fetchedAnimeData.data);
-      }
+    const selectedSeason = seasons[selectedSeasonIndex];
+    if (!selectedSeason) return;
+
+    const cachedData = await AnimeHubLocalStorageService.getLocalStorageSeasonAnimes(selectedSeason);
+    if (cachedData) return setAnimesData(cachedData);
+
+    const fetchedAnimeData = await JikanMoeService.getAnimesFromSeason(seasons[selectedSeasonIndex]);
+    if (fetchedAnimeData.data) {
+      AnimeHubLocalStorageService.setLocalStorageSeasonAnimes(selectedSeason, fetchedAnimeData.data);
+      setAnimesData(fetchedAnimeData.data);
     }
   }
 
@@ -129,11 +149,18 @@ export function AnimesContextProvider(props: AnimesContextProviderProp) {
   }
 
   useEffect(() => {
-    console.log('effect');
     if (animesData.length === 0) loadSeasonAnimes();
     if (!user) loadUserInfo();
     if (seasons.length === 0) loadSeasons();
   }, []);
+
+  useEffect(() => {
+    if (seasons.length > 0) loadSeasonAnimes();
+  }, [selectedSeasonIndex]);
+
+  useEffect(() => {
+    selectCurrentSeason();
+  }, [seasons]);
 
   useEffect(() => {
     if (user) {
@@ -150,6 +177,8 @@ export function AnimesContextProvider(props: AnimesContextProviderProp) {
         userProfile,
         watchingAnimes,
         seasons,
+        selectedSeasonIndex,
+        setSelectedSeasonIndex,
         setSeasons,
         loadSeasons,
         loadUserInfo,
