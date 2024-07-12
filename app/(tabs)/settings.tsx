@@ -3,7 +3,6 @@ import {
   AnimeHubLocalStorageService,
   CacheKeyInfo,
   LocalStorageCacheExpirationSettings,
-  LocalStorageCacheExpirationTimestamps,
 } from '@/services/LocalStorageData';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
@@ -11,14 +10,11 @@ import { FlatList, StyleSheet, Text, View } from 'react-native';
 
 export default function SettingsScreen() {
   const [cachedKeys, setCachedKeys] = useState<CacheKeyInfo[]>([]);
-  const [cachedTimestamp, setCachedTimestamp] = useState<LocalStorageCacheExpirationTimestamps | null>(null);
   const [cacheSettings, setCacheSettings] = useState<LocalStorageCacheExpirationSettings | null>(null);
 
   async function loadLocalStorageInfo() {
-    const cachedDataTimestamps = await AnimeHubLocalStorageService.getExpirationTimestamps();
     const cacheSettings = await AnimeHubLocalStorageService.getExpirationSettings();
     setCacheSettings(cacheSettings);
-    setCachedTimestamp(cachedDataTimestamps);
   }
 
   useEffect(() => {

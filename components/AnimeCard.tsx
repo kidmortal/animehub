@@ -1,17 +1,10 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  Alert,
-} from "react-native";
-import React, { useContext } from "react";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import When from "./When";
-import { SupaBaseService } from "@/services/Supabase";
-import { AnimesContext } from "@/context/animes";
+import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
+import React, { memo, useContext } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import When from './When';
+import { SupaBaseService } from '@/services/Supabase';
+import { AnimesContext } from '@/context/animes';
 
 type Props = {
   id: number;
@@ -21,13 +14,13 @@ type Props = {
   watching: boolean;
 };
 
-export default function AnimeCard(props: Props) {
+function AnimeCard(props: Props) {
   const context = useContext(AnimesContext);
   const router = useRouter();
 
   async function handleAddAnimeToWatchingList() {
     if (!context.user) {
-      Alert.alert("You must be logged in to add anime to watching list");
+      Alert.alert('You must be logged in to add anime to watching list');
       return;
     }
 
@@ -40,7 +33,7 @@ export default function AnimeCard(props: Props) {
     console.log(response);
 
     if (response) {
-      Alert.alert("Anime added to watching list");
+      Alert.alert('Anime added to watching list');
       context.fetchUserWatchingAnimes();
     }
   }
@@ -69,31 +62,33 @@ export default function AnimeCard(props: Props) {
   );
 }
 
+export default memo(AnimeCard);
+
 const styles = StyleSheet.create({
   animeCard: {
     flex: 1,
     borderRadius: 20,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 16,
   },
   animeTitle: {
     fontSize: 16,
-    color: "#fff",
+    color: '#fff',
   },
   animeImage: {
     width: 100,
     height: 150,
   },
   scoreContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   watchingTagContainer: {
-    flexDirection: "row",
+    flexDirection: 'row',
   },
   watchingTagText: {
-    color: "white",
+    color: 'white',
   },
 });
